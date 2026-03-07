@@ -7,3 +7,40 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+ 
+model User {
+  id                String        @id @default(uuid())
+  email             String        @unique
+  password          String
+  name              String
+  refreshToken      String?
+
+  organizedEvents   Event[]       @relation("OrganizerEvents")
+  participation     Participant[]
+}
+
+model Event {
+  id              String        @id @default(uuid())
+  title           String
+  description     String
+  date            DateTime
+  location        String
+  capacity        Int?
+  isPublic        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+
+  organizerId     String
+  organizer       User          @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  participants    Participant[]
+}
+
+model Participant {
+  id         String     @id @default(uuid())
+
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  eventId    String
+  event      Event      @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
