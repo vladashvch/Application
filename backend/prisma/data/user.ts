@@ -1,6 +1,6 @@
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
 
-const hash = 10
+const hash = 10;
 
 export const getUsers = async () => [
   {
@@ -21,4 +21,4 @@ export const getUsers = async () => [
     password: await bcrypt.hash('password123', hash),
     name: 'Carol',
   },
-]
+];

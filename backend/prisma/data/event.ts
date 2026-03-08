@@ -25,8 +25,8 @@ export const events = [
     description: 'Internal team synchronization meeting',
     date: new Date('2025-04-22T09:00:00'),
     location: 'Online, Zoom',
-    capacity: null,	// No limit
+    capacity: null, // No limit
     isPublic: false,
     organizerId: '3', // Carol
   },
-]
+];
