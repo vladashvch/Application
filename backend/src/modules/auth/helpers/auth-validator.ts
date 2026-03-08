@@ -1,7 +1,7 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
 import { DatabaseService } from 'src/infrastructure/database/database.service';
-import { ERROR_MESSAGES } from './error-messages';
+import { ERROR_MESSAGES } from '../../../common/error-messages';
 
 export class AuthValidator {
   static async assertEmailNotTaken(
@@ -37,5 +37,10 @@ export class AuthValidator {
 
   static async hashPassword(password: string): Promise<string> {
     return hash(password, 10);
+  }
+
+  static findRefreshToken(token: string | null) {
+    if (!token)
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
   }
 }

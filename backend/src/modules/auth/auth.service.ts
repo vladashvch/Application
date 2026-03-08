@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LoginAuthDto, RegisterAuthDto } from './dto';
 import { DatabaseService } from 'src/infrastructure/database/database.service';
 import { JwtTokenService } from './jwt/jwt-token';
-import { AuthValidator } from './helpers/validation/auth-validator';
+import { AuthValidator } from './helpers/auth-validator';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +11,7 @@ export class AuthService {
     private readonly jwtToken: JwtTokenService,
   ) {}
 
-  public async register(dto: RegisterAuthDto) {
+  async register(dto: RegisterAuthDto) {
     await AuthValidator.assertEmailNotTaken(dto.email, this.database);
     const passwordHash = await AuthValidator.hashPassword(dto.password);
 
@@ -52,6 +52,9 @@ export class AuthService {
 
   async refresh(userId: string) {
     const user = await AuthValidator.findUserByIdOrFail(userId, this.database);
+
+    AuthValidator.findRefreshToken(user.refreshToken);
+
     const accessToken = await this.jwtToken.generateAccessToken({
       sub: user.id,
       email: user.email,

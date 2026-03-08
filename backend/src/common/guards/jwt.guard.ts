@@ -5,12 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
-import { JwtRefreshPayload } from '../jwt/interfaces';
+import { JwtPayload } from '../../modules/auth/jwt/interfaces';
 import { CustomRequest } from './custom-request';
 
 @Injectable()
-export class JwtRefreshAuthGuard implements CanActivate {
+export class JwtAuthGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -20,13 +19,10 @@ export class JwtRefreshAuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException();
 
     try {
-      const payload = await this.jwtService.verifyAsync<JwtRefreshPayload>(
-        token,
-        {
-          secret: process.env.JWT_REFRESH_SECRET,
-        },
-      );
-      if (payload.type !== 'refresh') throw new UnauthorizedException();
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      if (payload.type !== 'access') throw new UnauthorizedException();
 
       request.user = { ...payload, id: payload.sub };
       return true;
