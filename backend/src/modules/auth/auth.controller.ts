@@ -1,11 +1,6 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {
-  AuthResponseDto,
-  LoginAuthDto,
-  LogoutResponseDto,
-  RegisterAuthDto,
-} from './dto';
+import { AuthResponseDto, LoginAuthDto, RegisterAuthDto } from './dto';
 import { JwtAuthGuard, JwtRefreshAuthGuard } from '../../common/guards';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
@@ -18,6 +13,7 @@ import {
 import { ERROR_MESSAGES } from '../../common/error-messages';
 import { YupValidationPipe } from 'src/common/pipes/yup-validation.pipe';
 import { loginSchema, registerSchema } from './schemas';
+import { SuccessResponseDto } from 'src/common/dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -67,7 +63,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout user (invalidate refresh token)' })
   @ApiResponse({ status: 200, description: 'Success flag' })
   @ApiResponse({ status: 401, description: ERROR_MESSAGES.INVALID_CREDENTIALS })
-  logout(@CurrentUser('id') userId: string): Promise<LogoutResponseDto> {
+  logout(@CurrentUser('id') userId: string): Promise<SuccessResponseDto> {
     return this.authService.logout(userId);
   }
 }

@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { LoginAuthDto, RegisterAuthDto } from './dto';
+import { AuthResponseDto, LoginAuthDto, RegisterAuthDto } from './dto';
 import { DatabaseService } from 'src/infrastructure/database/database.service';
 import { JwtTokenService } from './jwt/jwt-token';
 import { AuthValidator } from './helpers/auth-validator';
+import { SuccessResponseDto } from 'src/common/dto/success-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +12,7 @@ export class AuthService {
     private readonly jwtToken: JwtTokenService,
   ) {}
 
-  async register(dto: RegisterAuthDto) {
+  async register(dto: RegisterAuthDto): Promise<AuthResponseDto> {
     await AuthValidator.assertEmailNotTaken(dto.email, this.database);
     const passwordHash = await AuthValidator.hashPassword(dto.password);
 
@@ -26,7 +27,7 @@ export class AuthService {
     return this.generateTokens({ id: user.id, email: user.email });
   }
 
-  async login(dto: LoginAuthDto) {
+  async login(dto: LoginAuthDto): Promise<AuthResponseDto> {
     const user = await AuthValidator.findUserByEmailOrFail(
       dto.email,
       this.database,
@@ -36,7 +37,10 @@ export class AuthService {
     return this.generateTokens({ id: user.id, email: user.email });
   }
 
-  private async generateTokens(user: { id: string; email: string }) {
+  private async generateTokens(user: {
+    id: string;
+    email: string;
+  }): Promise<AuthResponseDto> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtToken.generateAccessToken({ sub: user.id, email: user.email }),
       this.jwtToken.generateRefreshToken({ sub: user.id }),
@@ -50,7 +54,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async refresh(userId: string) {
+  async refresh(userId: string): Promise<Partial<AuthResponseDto>> {
     const user = await AuthValidator.findUserByIdOrFail(userId, this.database);
 
     AuthValidator.findRefreshToken(user.refreshToken);
@@ -63,7 +67,7 @@ export class AuthService {
     return { accessToken };
   }
 
-  async logout(userId: string) {
+  async logout(userId: string): Promise<SuccessResponseDto> {
     await this.database.user.update({
       where: { id: userId },
       data: { refreshToken: null },
