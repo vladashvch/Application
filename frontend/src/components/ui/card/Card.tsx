@@ -10,6 +10,10 @@ const Card = ({
 	address,
 	joinedParticipants,
 	totalParticipants,
+	isJoined,
+	onJoin,
+	onLeave,
+	onClick,
 }: {
 	title: string
 	description: string
@@ -18,9 +22,17 @@ const Card = ({
 	address: string
 	joinedParticipants: string
 	totalParticipants: string
+	isJoined?: boolean
+	onJoin?: () => void
+	onLeave?: () => void
+	onClick?: () => void
 }) => {
+	const isFull = totalParticipants === joinedParticipants
 	return (
-		<div className='group border border-gray-200 rounded-lg p-4 flex flex-col gap-2 shadow-sm bg-white hover:shadow-md transition-shadow'>
+		<div
+			className='group border border-gray-200 rounded-lg p-4 flex flex-col gap-2 shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer'
+			onClick={onClick}
+		>
 			<div className='flex flex-col gap-1'>
 				<h2 className='text-base font-semibold group-hover:text-indigo-600 transition-colors'>
 					{title}
@@ -38,7 +50,28 @@ const Card = ({
 			</div>
 			<div className='w-full h-px bg-gray-300' aria-hidden></div>
 
-			<Button variant='join'>Join Event</Button>
+			{isJoined ? (
+				<Button
+					variant='lightBorder'
+					onClick={e => {
+						e.stopPropagation()
+						onLeave?.()
+					}}
+				>
+					Leave Event
+				</Button>
+			) : (
+				<Button
+					variant='join'
+					disabled={isFull}
+					onClick={e => {
+						e.stopPropagation()
+						onJoin?.()
+					}}
+				>
+					{isFull ? 'Event Full' : 'Join Event'}
+				</Button>
+			)}
 		</div>
 	)
 }

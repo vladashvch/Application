@@ -33,7 +33,7 @@ const Input = ({
                 ${className}
             `}
 			>
-				{icon && <span className='flex-shrink-0'>{icon}</span>}
+				{icon && <span>{icon}</span>}
 
 				<input
 					type={type}
