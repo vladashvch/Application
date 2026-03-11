@@ -1,5 +1,7 @@
 import { List, Calendar, Plus, User, LogOut, ArrowLeft } from 'lucide-react'
 import Button from '../ui/button/Button'
+import { useNavigationStore } from '../../store/navigation/navigation.store'
+import { useAuthStore } from '../../store/auth/auth.store'
 import UserInfo from '../ui/UserInfo'
 
 type HeaderVariant = 'auth' | 'main' | 'back'
@@ -9,7 +11,14 @@ interface HeaderProps {
 }
 
 const Header = ({ variant }: HeaderProps) => {
-	const currentPage = 'events'
+	const { navigate, goBack, currentPage } = useNavigationStore()
+	const { name, logout } = useAuthStore()
+
+	const handleLogout = () => {
+		logout()
+		navigate('login')
+	}
+
 	return (
 		<header className='sticky top-0 z-50 flex items-center justify-between p-4 border-gray-300 border-b bg-white'>
 			<div
@@ -19,7 +28,7 @@ const Header = ({ variant }: HeaderProps) => {
 					<Button
 						variant='light'
 						icon={<ArrowLeft size={16} />}
-						onClick={() => console.log('Go back')}
+						onClick={goBack}
 					>
 						Back
 					</Button>
@@ -29,23 +38,27 @@ const Header = ({ variant }: HeaderProps) => {
 					<>
 						<nav className='flex items-center gap-2 flex-wrap'>
 							<Button
-								variant={'primary'}
+								variant={currentPage === 'events' ? 'primary' : 'lightBorder'}
 								icon={<List size={14} />}
-								onClick={() => console.log('Go to events list')}
+								onClick={() => navigate('events')}
 							>
 								Events
 							</Button>
 							<Button
-								variant={'primary'}
+								variant={
+									currentPage === 'my-events' ? 'primary' : 'lightBorder'
+								}
 								icon={<Calendar size={14} />}
-								onClick={() => console.log('Go to my events')}
+								onClick={() => navigate('my-events')}
 							>
 								My Events
 							</Button>
 							<Button
-								variant={'primary'}
+								variant={
+									currentPage === 'create-event' ? 'primary' : 'lightBorder'
+								}
 								icon={<Plus size={14} />}
-								onClick={() => console.log('Go to create event')}
+								onClick={() => navigate('create-event')}
 							>
 								Create Event
 							</Button>
@@ -56,7 +69,7 @@ const Header = ({ variant }: HeaderProps) => {
 							<Button
 								variant='light'
 								icon={<LogOut size={16} />}
-								onClick={() => console.log('Logout')}
+								onClick={handleLogout}
 							/>
 						</div>
 					</>
@@ -64,14 +77,14 @@ const Header = ({ variant }: HeaderProps) => {
 				{variant === 'auth' && (
 					<nav className='flex gap-2'>
 						<Button
-							variant={'primary'}
-							onClick={() => console.log('Go to login')}
+							variant={currentPage === 'login' ? 'primary' : 'lightBorder'}
+							onClick={() => navigate('login')}
 						>
 							Sign In
 						</Button>
 						<Button
-							variant={'primary'}
-							onClick={() => console.log('Go to register')}
+							variant={currentPage === 'register' ? 'primary' : 'lightBorder'}
+							onClick={() => navigate('register')}
 						>
 							Register
 						</Button>
