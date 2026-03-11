@@ -1,4 +1,4 @@
-export const EVENT_SELECT = (userId: string) =>
+export const EVENT_SELECT = () =>
   ({
     id: true,
     title: true,
@@ -12,7 +12,6 @@ export const EVENT_SELECT = (userId: string) =>
     organizer: { select: { id: true, name: true } },
     _count: { select: { participants: true } },
     participants: {
-      where: { userId },
-      select: { id: true },
+      select: { user: { select: { id: true, name: true } } },
     },
   }) as const;

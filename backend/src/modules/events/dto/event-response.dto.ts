@@ -36,4 +36,7 @@ export class EventResponseDto {
 
   @ApiProperty({ example: false })
   isParticipant: boolean;
+
+  @ApiProperty({ example: ['Bob Smith', 'Charlie Brown'] })
+  participants: string[];
 }

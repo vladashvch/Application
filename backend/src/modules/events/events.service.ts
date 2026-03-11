@@ -14,7 +14,7 @@ export class EventsService {
   async findAll(userId: string): Promise<EventResponseDto[]> {
     const events = await this.database.event.findMany({
       where: { isPublic: true },
-      select: EVENT_SELECT(userId),
+      select: EVENT_SELECT(),
       orderBy: { date: 'asc' },
     });
 
@@ -27,7 +27,7 @@ export class EventsService {
         id,
         OR: [{ isPublic: true }, { organizerId: userId }],
       },
-      select: EVENT_SELECT(userId),
+      select: EVENT_SELECT(),
     });
 
     if (!event) throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND);
@@ -46,7 +46,7 @@ export class EventsService {
         isPublic: dto.isPublic ?? true,
         organizerId: userId,
       },
-      select: EVENT_SELECT(userId),
+      select: EVENT_SELECT(),
     });
 
     return this.toEventResponse(event, userId);
@@ -70,7 +70,7 @@ export class EventsService {
         ...(dto.capacity !== undefined && { capacity: dto.capacity }),
         ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
       },
-      select: EVENT_SELECT(userId),
+      select: EVENT_SELECT(),
     });
 
     return this.toEventResponse(updated, userId);
@@ -125,7 +125,8 @@ export class EventsService {
       organizer: event.organizer.name,
       participantCount: event._count.participants,
       isOrganizer: event.organizerId === userId,
-      isParticipant: event.participants.length > 0,
+      isParticipant: event.participants.some((p) => p.user.id === userId),
+      participants: event.participants.map((p) => p.user.name),
     };
   }
 }

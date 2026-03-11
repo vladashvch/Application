@@ -10,5 +10,5 @@ export type EventRow = {
   organizerId: string;
   organizer: { id: string; name: string };
   _count: { participants: number };
-  participants: { id: string }[];
+  participants: { user: { id: string; name: string } }[];
 };

@@ -21,4 +21,10 @@ export const getUsers = async () => [
     password: await bcrypt.hash('password123', hash),
     name: 'Carol',
   },
+  {
+    id: '4',
+    email: 'user4@example.com',
+    password: await bcrypt.hash('password123', hash),
+    name: 'David',
+  },
 ];
