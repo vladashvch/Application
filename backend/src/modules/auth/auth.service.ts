@@ -24,7 +24,10 @@ export class AuthService {
       },
     });
 
-    return this.generateTokens({ id: user.id, email: user.email });
+    return this.generateTokens({
+      id: user.id,
+      name: user.name,
+    });
   }
 
   async login(dto: LoginAuthDto): Promise<AuthResponseDto> {
@@ -34,15 +37,18 @@ export class AuthService {
     );
     await AuthValidator.assertPasswordValid(dto.password, user.password);
 
-    return this.generateTokens({ id: user.id, email: user.email });
+    return this.generateTokens({
+      id: user.id,
+      name: user.name,
+    });
   }
 
   private async generateTokens(user: {
     id: string;
-    email: string;
+    name: string;
   }): Promise<AuthResponseDto> {
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtToken.generateAccessToken({ sub: user.id, email: user.email }),
+      this.jwtToken.generateAccessToken({ sub: user.id, name: user.name }),
       this.jwtToken.generateRefreshToken({ sub: user.id }),
     ]);
 
@@ -51,7 +57,7 @@ export class AuthService {
       data: { refreshToken },
     });
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, name: user.name };
   }
 
   async refresh(userId: string): Promise<Partial<AuthResponseDto>> {
@@ -61,7 +67,7 @@ export class AuthService {
 
     const accessToken = await this.jwtToken.generateAccessToken({
       sub: user.id,
-      email: user.email,
+      name: user.name,
     });
 
     return { accessToken };
