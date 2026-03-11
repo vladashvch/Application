@@ -20,6 +20,26 @@ const EditEventPage = () => {
 	const [capacity, setCapacity] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+	const clearFieldError = (field: string) =>
+		setFieldErrors(e => {
+			const next = { ...e }
+			delete next[field]
+			return next
+		})
+
+	const validate = () => {
+		const e: Record<string, string> = {}
+		if (!title.trim()) e.title = 'Title is required.'
+		if (!description.trim()) e.description = 'Description is required.'
+		if (!date) e.date = 'Date is required.'
+		if (!location.trim()) e.location = 'Location is required.'
+		if (capacity && (isNaN(Number(capacity)) || Number(capacity) <= 0))
+			e.capacity = 'Capacity must be a positive number.'
+		setFieldErrors(e)
+		return Object.keys(e).length === 0
+	}
 
 	useEffect(() => {
 		if (!params.id) return
@@ -37,6 +57,7 @@ const EditEventPage = () => {
 
 	const handleSubmit = async () => {
 		if (!params.id) return
+		if (!validate()) return
 		setError(null)
 		setLoading(true)
 		try {
@@ -67,14 +88,22 @@ const EditEventPage = () => {
 					placeholder='Event Name'
 					isRequired
 					value={title}
-					onChange={e => setTitle(e.target.value)}
+					error={fieldErrors.title}
+					onChange={e => {
+						setTitle(e.target.value)
+						clearFieldError('title')
+					}}
 				/>
 				<Textarea
 					label='Description'
 					placeholder='Event Description'
 					isRequired
 					value={description}
-					onChange={e => setDescription(e.target.value)}
+					error={fieldErrors.description}
+					onChange={e => {
+						setDescription(e.target.value)
+						clearFieldError('description')
+					}}
 				/>
 				<div className='flex gap-4'>
 					<div className='flex-1'>
@@ -83,7 +112,11 @@ const EditEventPage = () => {
 							type='date'
 							isRequired
 							value={date}
-							onChange={e => setDate(e.target.value)}
+							error={fieldErrors.date}
+							onChange={e => {
+								setDate(e.target.value)
+								clearFieldError('date')
+							}}
 						/>
 					</div>
 					<div className='flex-1'>
@@ -100,7 +133,11 @@ const EditEventPage = () => {
 					placeholder='e.g., Convention Center, San Francisco'
 					isRequired
 					value={location}
-					onChange={e => setLocation(e.target.value)}
+					error={fieldErrors.location}
+					onChange={e => {
+						setLocation(e.target.value)
+						clearFieldError('location')
+					}}
 				/>
 				<Input
 					label='Capacity (optional)'
@@ -108,7 +145,11 @@ const EditEventPage = () => {
 					placeholder='Event Capacity'
 					details='Maximum number of participants allowed. Leave empty for unlimited capacity.'
 					value={capacity}
-					onChange={e => setCapacity(e.target.value)}
+					error={fieldErrors.capacity}
+					onChange={e => {
+						setCapacity(e.target.value)
+						clearFieldError('capacity')
+					}}
 				/>
 				<Select
 					name='visibility'

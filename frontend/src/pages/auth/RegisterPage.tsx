@@ -15,13 +15,32 @@ const RegisterPage = () => {
 	const [confirm, setConfirm] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+	const clearFieldError = (field: string) =>
+		setFieldErrors(e => {
+			const next = { ...e }
+			delete next[field]
+			return next
+		})
+
+	const validate = () => {
+		const e: Record<string, string> = {}
+		if (!name.trim()) e.name = 'Name is required.'
+		if (!email.trim()) e.email = 'Email is required.'
+		else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email.'
+		if (!password) e.password = 'Password is required.'
+		else if (password.length < 6)
+			e.password = 'Password must be at least 6 characters.'
+		if (!confirm) e.confirm = 'Please confirm your password.'
+		else if (confirm !== password) e.confirm = 'Passwords do not match.'
+		setFieldErrors(e)
+		return Object.keys(e).length === 0
+	}
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		if (password !== confirm) {
-			setError('Passwords do not match.')
-			return
-		}
+		if (!validate()) return
 		setError(null)
 		setLoading(true)
 		try {
@@ -37,14 +56,18 @@ const RegisterPage = () => {
 
 	return (
 		<FormLayout title='Register'>
-			<form className='flex flex-col gap-4' onSubmit={handleSubmit}>
-				<div className='flex flex-col gap-2'>
+			<form className='flex flex-col gap-6' onSubmit={handleSubmit}>
+				<div className='flex flex-col gap-4'>
 					<Input
 						label='Name'
 						placeholder='Your full name'
 						autoComplete='name'
 						value={name}
-						onChange={e => setName(e.target.value)}
+						error={fieldErrors.name}
+						onChange={e => {
+							setName(e.target.value)
+							clearFieldError('name')
+						}}
 					/>
 					<Input
 						label='Email'
@@ -52,7 +75,11 @@ const RegisterPage = () => {
 						placeholder='user@example.com'
 						autoComplete='email'
 						value={email}
-						onChange={e => setEmail(e.target.value)}
+						error={fieldErrors.email}
+						onChange={e => {
+							setEmail(e.target.value)
+							clearFieldError('email')
+						}}
 					/>
 					<Input
 						label='Password'
@@ -60,7 +87,11 @@ const RegisterPage = () => {
 						placeholder='Enter your password'
 						autoComplete='new-password'
 						value={password}
-						onChange={e => setPassword(e.target.value)}
+						error={fieldErrors.password}
+						onChange={e => {
+							setPassword(e.target.value)
+							clearFieldError('password')
+						}}
 					/>
 					<Input
 						label='Confirm password'
@@ -68,7 +99,11 @@ const RegisterPage = () => {
 						placeholder='Confirm your password'
 						autoComplete='new-password'
 						value={confirm}
-						onChange={e => setConfirm(e.target.value)}
+						error={fieldErrors.confirm}
+						onChange={e => {
+							setConfirm(e.target.value)
+							clearFieldError('confirm')
+						}}
 					/>
 				</div>
 				{error && <p className='text-sm text-red-500'>{error}</p>}

@@ -3,12 +3,14 @@ import React from 'react'
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
 	label?: string
 	isRequired?: boolean
+	error?: string
 	className?: string
 }
 
 const Textarea = ({
 	label,
 	isRequired = false,
+	error,
 	className = '',
 	...props
 }: TextareaProps) => {
@@ -23,9 +25,10 @@ const Textarea = ({
 
 			<div
 				className={`
-					border border-gray-300 rounded-lg p-2
+					border rounded-lg p-2
 					 text-gray-600
 					focus-within:border-indigo-600 transition-colors
+					${error ? 'border-red-400' : 'border-gray-300'}
 					${className}
 				`}
 			>
@@ -35,6 +38,7 @@ const Textarea = ({
 					{...props}
 				/>
 			</div>
+			{error && <p className='text-xs text-red-500 ml-1'>{error}</p>}
 		</div>
 	)
 }
