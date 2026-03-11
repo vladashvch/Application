@@ -1,12 +1,20 @@
 import { DAYS_OF_WEEK } from './days-of-week'
+import { formatTime } from '../../../utils/time-format'
+import type { UserEventResponse } from '../../../api/types'
 
 interface MonthCalendarProps {
 	year: number
 	month: number
+	events?: UserEventResponse[]
 	onEventClick?: (id: string) => void
 }
 
-const MonthCalendar = ({ year, month, onEventClick }: MonthCalendarProps) => {
+const MonthCalendar = ({
+	year,
+	month,
+	events = [],
+	onEventClick,
+}: MonthCalendarProps) => {
 	const now = new Date()
 	const currentYear = year
 	const currentMonth = month
@@ -14,15 +22,23 @@ const MonthCalendar = ({ year, month, onEventClick }: MonthCalendarProps) => {
 	const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month
 
 	const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
-
 	const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay()
-
 	const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 	const emptySlots = Array.from({ length: firstDayIndex })
-
 	const occupiedSlots = firstDayIndex + daysInMonth
 	const totalGridSlots = 42
 	const emptySlotsAtEnd = Array.from({ length: totalGridSlots - occupiedSlots })
+
+	const eventsForDay = (day: number) =>
+		events.filter(e => {
+			const d = new Date(e.date)
+			return (
+				d.getFullYear() === currentYear &&
+				d.getMonth() === currentMonth &&
+				d.getDate() === day
+			)
+		})
+
 	return (
 		<div className='grid grid-cols-7 border border-gray-200 rounded-lg text-xs'>
 			{DAYS_OF_WEEK.map(day => (
@@ -40,33 +56,34 @@ const MonthCalendar = ({ year, month, onEventClick }: MonthCalendarProps) => {
 
 			{days.map(day => {
 				const isToday = isCurrentMonth && day === todayDate
+				const dayEvents = eventsForDay(day)
 
 				return (
 					<div
 						key={day}
 						className={`
-                            min-h-[100px] border-r border-b border-gray-200 p-2  cursor-pointer 
-                            flex flex-col gap-2 transition-colors hover:bg-gray-50
-                            ${isToday ? 'border-t-2 border-t-indigo-600 border-l-2 border-l-indigo-600 bg-indigo-50/20' : ''}
-                        `}
+							min-h-[100px] border-r border-b border-gray-200 p-2 cursor-pointer
+							flex flex-col gap-2 transition-colors hover:bg-gray-50
+							${isToday ? 'border-t-2 border-t-indigo-600 border-l-2 border-l-indigo-600 bg-indigo-50/20' : ''}
+						`}
 					>
 						<span
 							className={`font-medium ${isToday ? 'text-indigo-600' : 'text-gray-700'}`}
 						>
 							{day}
 						</span>
-
-						{day === 15 && (
+						{dayEvents.map(e => (
 							<div
-								className='w-full bg-indigo-100 text-indigo-600 text-[12px] font-semibold rounded px-2 py-1 truncate text-xs cursor-pointer hover:bg-indigo-200 transition-colors'
-								onClick={e => {
-									e.stopPropagation()
-									onEventClick?.('evt-4')
+								key={e.id}
+								className='w-full bg-indigo-100 text-indigo-600 text-[12px] font-semibold rounded px-2 py-1 truncate cursor-pointer hover:bg-indigo-200 transition-colors'
+								onClick={ev => {
+									ev.stopPropagation()
+									onEventClick?.(e.id)
 								}}
 							>
-								15:30 - NestJS Workshop
+								{formatTime(e.date)} - {e.title}
 							</div>
-						)}
+						))}
 					</div>
 				)
 			})}

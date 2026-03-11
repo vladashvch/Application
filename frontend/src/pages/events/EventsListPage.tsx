@@ -1,20 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 import Card from '../../components/ui/card/Card'
 import Input from '../../components/ui/Input'
 import Pagination from '../../components/ui/Pagination'
 import { useNavigationStore } from '../../store/navigation/navigation.store'
-import { MOCK_EVENTS } from '../../mock/events'
+import { eventsApi } from '../../api/routes/events.api'
+import type { EventResponse } from '../../api/types'
+import { formatDate, formatTime } from '../../utils/time-format'
 
 const PAGE_SIZE = 6
 
 const EventsListPage = () => {
 	const { navigate } = useNavigationStore()
+	const [events, setEvents] = useState<EventResponse[]>([])
 	const [search, setSearch] = useState('')
 	const [page, setPage] = useState(1)
-	const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
 
-	const filtered = MOCK_EVENTS.filter(e =>
+	useEffect(() => {
+		eventsApi.findAll().then(setEvents)
+	}, [])
+
+	const filtered = events.filter(e =>
 		e.title.toLowerCase().includes(search.toLowerCase()),
 	)
 	const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
@@ -23,6 +29,36 @@ const EventsListPage = () => {
 	const handleSearchChange = (value: string) => {
 		setSearch(value)
 		setPage(1)
+	}
+
+	const handleJoin = async (id: string) => {
+		await eventsApi.join(id)
+		setEvents(prev =>
+			prev.map(e =>
+				e.id === id
+					? {
+							...e,
+							isParticipant: true,
+							participantCount: e.participantCount + 1,
+						}
+					: e,
+			),
+		)
+	}
+
+	const handleLeave = async (id: string) => {
+		await eventsApi.leave(id)
+		setEvents(prev =>
+			prev.map(e =>
+				e.id === id
+					? {
+							...e,
+							isParticipant: false,
+							participantCount: e.participantCount - 1,
+						}
+					: e,
+			),
+		)
 	}
 
 	return (
@@ -48,20 +84,17 @@ const EventsListPage = () => {
 						key={event.id}
 						title={event.title}
 						description={event.description}
-						date={event.date}
-						time={event.time}
+						date={formatDate(event.date)}
+						time={formatTime(event.date)}
 						address={event.location}
-						joinedParticipants={String(event.participants.length)}
-						totalParticipants={String(event.capacity)}
-						isJoined={joinedIds.has(event.id)}
-						onJoin={() => setJoinedIds(prev => new Set(prev).add(event.id))}
-						onLeave={() =>
-							setJoinedIds(prev => {
-								const next = new Set(prev)
-								next.delete(event.id)
-								return next
-							})
+						joinedParticipants={String(event.participantCount)}
+						totalParticipants={
+							event.capacity !== null ? String(event.capacity) : '∞'
 						}
+						isOrganizer={event.isOrganizer === true}
+						isJoined={event.isParticipant}
+						onJoin={() => handleJoin(event.id)}
+						onLeave={() => handleLeave(event.id)}
 						onClick={() => navigate('event-details', { id: event.id })}
 					/>
 				))}

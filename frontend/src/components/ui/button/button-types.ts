@@ -5,4 +5,5 @@ export const BUTTON_VARIANTS = {
   lightBorder:
     'bg-white text-gray-800 hover:bg-indigo-100 border border-gray-300',
   light: 'bg-white hover:bg-indigo-100',
-} as const
+  disabled: 'bg-gray-300 text-gray-500 cursor-not-allowed',
+} as const 

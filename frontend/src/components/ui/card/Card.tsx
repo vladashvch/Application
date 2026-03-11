@@ -12,6 +12,7 @@ const Card = ({
 	totalParticipants,
 	isJoined,
 	onJoin,
+	isOrganizer,
 	onLeave,
 	onClick,
 }: {
@@ -23,6 +24,7 @@ const Card = ({
 	joinedParticipants: string
 	totalParticipants: string
 	isJoined?: boolean
+	isOrganizer?: boolean
 	onJoin?: () => void
 	onLeave?: () => void
 	onClick?: () => void
@@ -50,28 +52,32 @@ const Card = ({
 			</div>
 			<div className='w-full h-px bg-gray-300' aria-hidden></div>
 
-			{isJoined ? (
-				<Button
-					variant='lightBorder'
-					onClick={e => {
-						e.stopPropagation()
-						onLeave?.()
-					}}
-				>
-					Leave Event
-				</Button>
-			) : (
-				<Button
-					variant='join'
-					disabled={isFull}
-					onClick={e => {
-						e.stopPropagation()
-						onJoin?.()
-					}}
-				>
-					{isFull ? 'Event Full' : 'Join Event'}
-				</Button>
-			)}
+			{!isOrganizer &&
+				(isJoined ? (
+					<Button
+						variant='lightBorder'
+						onClick={e => {
+							e.stopPropagation()
+							onLeave?.()
+						}}
+					>
+						Leave Event
+					</Button>
+				) : isFull ? (
+					<Button variant='disabled' disabled>
+						Full
+					</Button>
+				) : (
+					<Button
+						variant='join'
+						onClick={e => {
+							e.stopPropagation()
+							onJoin?.()
+						}}
+					>
+						Join Event
+					</Button>
+				))}
 		</div>
 	)
 }

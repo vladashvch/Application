@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
 	Calendar,
 	Clock,
@@ -8,6 +8,7 @@ import {
 	Trash2,
 	LogIn,
 	LogOut,
+	UserRound,
 	User,
 } from 'lucide-react'
 import FormLayout from '../../components/layout/FormLayout'
@@ -15,32 +16,63 @@ import { CardInfo } from '../../components/ui/card/CardInfo'
 import Button from '../../components/ui/button/Button'
 import ConfirmModal from '../../components/ui/ConfirmModal'
 import { useNavigationStore } from '../../store/navigation/navigation.store'
-import { MOCK_EVENTS } from '../../mock/events'
+import { eventsApi } from '../../api/routes/events.api'
+import type { EventResponse } from '../../api/types'
+import { formatDate, formatTime } from '../../utils/time-format'
 import ElementsList from '../../components/ui/ElementsList'
 import UserInfo from '../../components/ui/UserInfo'
 
-const CURRENT_USER_ID = 'user-2'
-
 const EventDetailsPage = () => {
-	const { params, replace, navigate } = useNavigationStore()
-	const event = MOCK_EVENTS.find(e => e.id === params.id)
-
-	const [isJoined, setIsJoined] = useState(
-		() => event?.participants.some(p => p.id === CURRENT_USER_ID) ?? false,
-	)
+	const { params, replace } = useNavigationStore()
+	const [event, setEvent] = useState<EventResponse | null>(null)
 	const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-	if (!event) {
-		replace('events')
-		return null
+	useEffect(() => {
+		if (!params.id) {
+			replace('events')
+			return
+		}
+		eventsApi
+			.findOne(params.id)
+			.then(setEvent)
+			.catch(() => replace('events'))
+	}, [params.id, replace])
+
+	if (!event) return null
+
+	const isFull =
+		event.capacity !== null ? event.participantCount >= event.capacity : false
+
+	const { isOrganizer, isParticipant } = event
+
+	const handleJoin = async () => {
+		await eventsApi.join(event.id)
+		setEvent(
+			e =>
+				e && {
+					...e,
+					isParticipant: true,
+					participantCount: e.participantCount + 1,
+				},
+		)
 	}
 
-	const isOrganizer = CURRENT_USER_ID === event.organizerId
+	const handleLeave = async () => {
+		await eventsApi.leave(event.id)
+		setEvent(
+			e =>
+				e && {
+					...e,
+					isParticipant: false,
+					participantCount: e.participantCount - 1,
+				},
+		)
+	}
 
-	const handleDeleteConfirm = () => {
+	const handleDeleteConfirm = async () => {
 		setShowDeleteModal(false)
-		// TODO: call delete API then navigate away
-		replace('events')
+		await eventsApi.remove(event.id)
+		replace('my-events')
 	}
 
 	return (
@@ -48,7 +80,7 @@ const EventDetailsPage = () => {
 			<ConfirmModal
 				isOpen={showDeleteModal}
 				title='Delete Event'
-				description={`Are you sure you want to delete "${event.title}"? This action cannot be undone.`}
+				description={`Are you sure you want to delete this event?`}
 				confirmLabel='Delete'
 				onConfirm={handleDeleteConfirm}
 				onCancel={() => setShowDeleteModal(false)}
@@ -57,44 +89,52 @@ const EventDetailsPage = () => {
 			<FormLayout
 				title={event.title}
 				description={event.description}
-				maxWidth='max-w-2xl'
+				maxWidth='max-w-lg'
 			>
 				<div className='flex flex-col gap-2'>
-					<CardInfo icon={<Calendar size={14} />} text={event.date} />
-					<CardInfo icon={<Clock size={14} />} text={event.time} />
+					<CardInfo
+						icon={<Calendar size={14} />}
+						text={formatDate(event.date)}
+					/>
+					<CardInfo icon={<Clock size={14} />} text={formatTime(event.date)} />
 					<CardInfo icon={<MapPin size={14} />} text={event.location} />
 					<CardInfo
 						icon={<Users size={14} />}
-						text={`${event.participants.length} / ${event.capacity} spots filled`}
+						text={
+							event.capacity !== null
+								? `${event.participantCount} / ${event.capacity} spots filled`
+								: `${event.participantCount} participants`
+						}
+					/>
+					<CardInfo
+						icon={<UserRound size={14} />}
+						text={`Organized by ${event.organizer}`}
 					/>
 				</div>
-
-				<div className='w-full h-px bg-gray-200' aria-hidden />
-
 				<ElementsList
-					elements={event.participants.map(p => (
-						<UserInfo icon={<User size={16} />} text={p.name ?? 'User'} />
+					elements={event.participants.map((p: string, i: number) => (
+						<UserInfo icon={<User size={16} />} text={p ?? 'User'} key={i} />
 					))}
 					info={{
 						name: 'Participants',
 						noElements: 'No participants yet.',
 						additionalInfo:
-							event.capacity !== undefined
+							event.capacity !== null
 								? `${event.participants.length} / ${event.capacity} spots filled`
-								: undefined,
+								: `${event.participants.length} / ∞`,
 					}}
 				/>
 
 				<div className='w-full h-px bg-gray-200' aria-hidden />
 
 				<div className='flex items-center justify-between gap-3'>
-					{!isOrganizer && (
+					{!isOrganizer && !isFull && (
 						<div>
-							{isJoined ? (
+							{isParticipant ? (
 								<Button
 									variant='lightBorder'
 									icon={<LogOut size={14} />}
-									onClick={() => setIsJoined(false)}
+									onClick={handleLeave}
 								>
 									Leave Event
 								</Button>
@@ -102,7 +142,7 @@ const EventDetailsPage = () => {
 								<Button
 									variant='join'
 									icon={<LogIn size={14} />}
-									onClick={() => setIsJoined(true)}
+									onClick={handleJoin}
 								>
 									Join Event
 								</Button>
@@ -115,7 +155,7 @@ const EventDetailsPage = () => {
 							<Button
 								variant='lightBorder'
 								icon={<Pencil size={14} />}
-								onClick={() => navigate('edit-event', { id: event.id })}
+								onClick={() => replace('edit-event', { id: event.id })}
 							>
 								Edit
 							</Button>
