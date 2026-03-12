@@ -18,17 +18,18 @@ async function bootstrap() {
   app.enableCors(getCoreConfig(config));
   app.useGlobalFilters(new ErrorHandlerFilter());
 
-  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('/docs', app, swaggerDocument, {
-    yamlDocumentUrl: '/openapi.yaml',
-  });
-
   const port = config.getOrThrow<number>('HTTP_PORT');
-  const host = config.getOrThrow<string>('HTTP_HOST');
 
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('/docs', app, swaggerDocument, {
+      yamlDocumentUrl: '/openapi.yaml',
+    });
+
+    logger.log(`Swagger: http://localhost:${port}/docs`);
+  }
+
+  logger.log(`Server started on port ${port}`);
   await app.listen(port);
-
-  logger.log(`Gateway started: ${host}`);
-  logger.log(`Swagger: ${host}/docs`);
 }
 void bootstrap();

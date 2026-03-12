@@ -43,7 +43,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
       HTTP_PORT: 3000
-      HTTP_HOST: http://localhost:${BACKEND_PORT}
+      NODE_ENV: ${NODE_ENV}
       HTTP_CORS: http://localhost:${FRONTEND_PORT}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}

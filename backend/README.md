@@ -49,12 +49,12 @@ File .env includes:
 ```dotenv
 DATABASE_URL=postgresql://user:password@localhost:5432/application_db
 HTTP_PORT=3000
-HTTP_HOST=http://localhost:3000  // as HTTP_PORT
 HTTP_CORS=http://localhost:5173  // frontend port
 JWT_SECRET=access_secret
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_SECRET=refresh_secret
 JWT_REFRESH_EXPIRES_IN=30d
+NODE_ENV=development
 ```
 
 ## Run locally

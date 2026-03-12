@@ -86,6 +86,7 @@ JWT_SECRET=access_secret
 JWT_EXPIRES_IN=1h
 JWT_REFRESH_SECRET=refresh_secret
 JWT_REFRESH_EXPIRES_IN=30d
+NODE_ENV=development
 ```
 
 ## Run services individually
