@@ -1,8 +1,8 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  postgres:
-    container_name: postgres_application
+  database:
+    container_name: database_application
     image: postgres:16-alpine3.23
     restart: always
     ports:
@@ -12,12 +12,51 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - database-data:/var/lib/postgresql/data
+    networks:
+      - application-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    container_name: frontend_application
+    build: ./frontend
+    restart: always
+    ports:
+      - ${FRONTEND_PORT}:80
+    environment:
+      VITE_API_URL: http://backend:${BACKEND_PORT}
+    depends_on:
+      - backend
+    networks:
+      - application-network
+
+  backend:
+    container_name: backend_application
+    build: ./backend
+    restart: always
+    ports:
+      - ${BACKEND_PORT}:3000
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      HTTP_PORT: 3000
+      HTTP_HOST: http://localhost:${BACKEND_PORT}
+      HTTP_CORS: http://localhost:${FRONTEND_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+    depends_on:
+      database:
+        condition: service_healthy
     networks:
       - application-network
 
 volumes:
-  postgres-data:
+  database-data:
 
 networks:
   application-network:
