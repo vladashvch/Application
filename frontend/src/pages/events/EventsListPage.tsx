@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import Card from '../../components/ui/card/Card'
 import Input from '../../components/ui/Input'
@@ -15,20 +15,36 @@ const EventsListPage = () => {
 	const [events, setEvents] = useState<EventResponse[]>([])
 	const [search, setSearch] = useState('')
 	const [page, setPage] = useState(1)
+	const [total, setTotal] = useState(0)
+	const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+	const totalPages = Math.ceil(total / PAGE_SIZE)
+
+	const fetchEvents = (searchValue: string, pageValue: number) => {
+		eventsApi
+			.findAll({
+				search: searchValue || undefined,
+				page: pageValue,
+				limit: PAGE_SIZE,
+			})
+			.then(res => {
+				setEvents(res.data)
+				setTotal(res.total)
+			})
+	}
 
 	useEffect(() => {
-		eventsApi.findAll().then(setEvents)
-	}, [])
-
-	const filtered = events.filter(e =>
-		e.title.toLowerCase().includes(search.toLowerCase()),
-	)
-	const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-	const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+		fetchEvents(search, page)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [page])
 
 	const handleSearchChange = (value: string) => {
 		setSearch(value)
 		setPage(1)
+		if (searchTimeout.current) clearTimeout(searchTimeout.current)
+		searchTimeout.current = setTimeout(() => {
+			fetchEvents(value, 1)
+		}, 300)
 	}
 
 	const handleJoin = async (id: string) => {
@@ -79,7 +95,7 @@ const EventsListPage = () => {
 			/>
 
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-				{paginated.map(event => (
+				{events.map(event => (
 					<Card
 						key={event.id}
 						title={event.title}

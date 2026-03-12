@@ -1,7 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/infrastructure/database/database.service';
 import { ERROR_MESSAGES } from '../../common/error-messages';
-import { CreateEventDto, EventResponseDto, UpdateEventDto } from './dto';
+import {
+  CreateEventDto,
+  EventResponseDto,
+  GetEventsDto,
+  PaginatedEventsResponseDto,
+  UpdateEventDto,
+} from './dto';
 import { EventValidator } from './helpers/event-validator';
 import { EventRow } from './types';
 import { EVENT_SELECT } from './helpers/event-select';
@@ -11,14 +17,37 @@ import { SuccessResponseDto } from 'src/common/dto';
 export class EventsService {
   constructor(private readonly database: DatabaseService) {}
 
-  async findAll(userId: string): Promise<EventResponseDto[]> {
-    const events = await this.database.event.findMany({
-      where: { isPublic: true },
-      select: EVENT_SELECT(),
-      orderBy: { date: 'asc' },
-    });
+  async findAll(
+    userId: string,
+    query: GetEventsDto,
+  ): Promise<PaginatedEventsResponseDto> {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.max(1, query.limit ?? 6);
+    const skip = (page - 1) * limit;
+    const where = {
+      isPublic: true,
+      ...(query.search
+        ? { title: { contains: query.search, mode: 'insensitive' as const } }
+        : {}),
+    };
 
-    return events.map((event) => this.toEventResponse(event, userId));
+    const [events, total] = await Promise.all([
+      this.database.event.findMany({
+        where,
+        select: EVENT_SELECT(),
+        orderBy: { date: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.database.event.count({ where }),
+    ]);
+
+    return {
+      data: (events as EventRow[]).map((event) =>
+        this.toEventResponse(event, userId),
+      ),
+      total,
+    };
   }
 
   async findOne(id: string, userId: string): Promise<EventResponseDto> {

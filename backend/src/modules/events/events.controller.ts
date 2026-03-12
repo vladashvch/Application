@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -22,7 +23,13 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ERROR_MESSAGES } from '../../common/error-messages';
 import { JwtAuthGuard } from '../../common/guards';
 import { YupValidationPipe } from '../../common/pipes/yup-validation.pipe';
-import { CreateEventDto, EventResponseDto, UpdateEventDto } from './dto';
+import {
+  CreateEventDto,
+  EventResponseDto,
+  GetEventsDto,
+  PaginatedEventsResponseDto,
+  UpdateEventDto,
+} from './dto';
 import { createEventSchema, updateEventSchema } from './schemas';
 import { EventsService } from './events.service';
 import { SuccessResponseDto } from 'src/common/dto';
@@ -36,10 +43,13 @@ export class EventsController {
 
   @Get()
   @ApiOperation({ summary: 'Fetch all public events' })
-  @ApiResponse({ status: 200, type: [EventResponseDto] })
+  @ApiResponse({ status: 200, type: PaginatedEventsResponseDto })
   @ApiResponse({ status: 401, description: ERROR_MESSAGES.INVALID_CREDENTIALS })
-  findAll(@CurrentUser('id') userId: string): Promise<EventResponseDto[]> {
-    return this.eventsService.findAll(userId);
+  findAll(
+    @CurrentUser('id') userId: string,
+    @Query() query: GetEventsDto,
+  ): Promise<PaginatedEventsResponseDto> {
+    return this.eventsService.findAll(userId, query);
   }
 
   @Get(':id')

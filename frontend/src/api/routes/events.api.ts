@@ -1,5 +1,7 @@
 import api from '../axios'
 import type {
+	PaginatedEventsResponse,
+	GetEventsParams,
 	EventResponse,
 	CreateEventDto,
 	UpdateEventDto,
@@ -7,8 +9,8 @@ import type {
 } from '../types'
 
 export const eventsApi = {
-	findAll: () =>
-		api.get<EventResponse[]>('/events').then(r => r.data),
+	findAll: (params?: GetEventsParams) =>
+		api.get<PaginatedEventsResponse>('/events', { params }).then(r => r.data),
 
 	findOne: (id: string) =>
 		api.get<EventResponse>(`/events/${id}`).then(r => r.data),
