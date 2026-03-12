@@ -1,35 +1,71 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect } from 'react'
+import Header from './components/layout/Header'
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import CreateEventPage from './pages/event/CreateEventPage'
+import EventDetailsPage from './pages/event/EventDetailsPage'
+import EventsListPage from './pages/events/EventsListPage'
+import MyEventsPage from './pages/events/MyEventsPage'
+import { useNavigationStore } from './store/navigation/navigation.store'
+import { useAuthStore } from './store/auth/auth.store'
+import EditEventPage from './pages/event/EditEventPage'
+
+const PUBLIC_PAGES = ['login', 'register'] as const
+type PublicPage = (typeof PUBLIC_PAGES)[number]
 
 function App() {
-  const [count, setCount] = useState(0)
+	const { currentPage, replace, _syncFromUrl } = useNavigationStore()
+	const isAuthenticated = useAuthStore(s => !!s.accessToken)
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+	useEffect(() => {
+		window.addEventListener('popstate', _syncFromUrl)
+		return () => window.removeEventListener('popstate', _syncFromUrl)
+	}, [_syncFromUrl])
+
+	useEffect(() => {
+		if (!isAuthenticated && !PUBLIC_PAGES.includes(currentPage as PublicPage)) {
+			replace('login')
+		} else if (
+			isAuthenticated &&
+			PUBLIC_PAGES.includes(currentPage as PublicPage)
+		) {
+			replace('events')
+		}
+	}, [currentPage, isAuthenticated, replace])
+
+	const renderPage = () => {
+		switch (currentPage) {
+			case 'login':
+				return <LoginPage />
+			case 'register':
+				return <RegisterPage />
+			case 'events':
+				return <EventsListPage />
+			case 'my-events':
+				return <MyEventsPage />
+			case 'create-event':
+				return <CreateEventPage />
+			case 'event-details':
+				return <EventDetailsPage />
+			case 'edit-event':
+				return <EditEventPage />
+			default:
+				return <div className='p-10 text-center'>Page not found</div>
+		}
+	}
+
+	const getHeaderVariant = () => {
+		if (['create-event', 'event-details', 'edit-event'].includes(currentPage))
+			return 'back'
+		if (PUBLIC_PAGES.includes(currentPage as PublicPage)) return 'auth'
+		return 'main'
+	}
+
+	return (
+		<div className='min-h-screen bg-gray-50 flex flex-col'>
+			<Header variant={getHeaderVariant()} />
+			<main className='flex flex-col flex-1 p-6 gap-6'>{renderPage()}</main>
+		</div>
+	)
 }
-
 export default App
