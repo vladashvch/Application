@@ -47,26 +47,12 @@ const EventDetailsPage = () => {
 
 	const handleJoin = async () => {
 		await eventsApi.join(event.id)
-		setEvent(
-			e =>
-				e && {
-					...e,
-					isParticipant: true,
-					participantCount: e.participantCount + 1,
-				},
-		)
+		eventsApi.findOne(event.id).then(setEvent)
 	}
 
 	const handleLeave = async () => {
 		await eventsApi.leave(event.id)
-		setEvent(
-			e =>
-				e && {
-					...e,
-					isParticipant: false,
-					participantCount: e.participantCount - 1,
-				},
-		)
+		eventsApi.findOne(event.id).then(setEvent)
 	}
 
 	const handleDeleteConfirm = async () => {
